@@ -11,18 +11,19 @@ import matplotlib.pyplot as plt
 import sys
 
 # External Functions import - Troels Functions
-sys.path.append('../External_Functions')
+sys.path.append('../    External_Functions')
 from ExternalFunctions import nice_string_output, add_text_to_ax   # Useful functions to print fit results on figure
 
 # Local external function a.k.a my functions written in Functions_Assist.py (must be in the same folder or add to the sys.path as above)
 from Functions_Assist import read_data, linear_fit, add_subplot_axes, FitAndResiduals, Fit2Gaussian, gaussian
 
+names = ['Victor', 'Sippo', 'Peiyuan']
+name = names[2]
 
 # Getting the name of the data files
-#Filename1 = '../StopwatchTimer/Measurements_Victor_1.dat' 
-Filename1 = '../StopwatchTimer/timer_output.dat' 
-Filename2 = '../StopwatchTimer/Measurements_Victor_2.dat'
-Filename3 = '../StopwatchTimer/Measurements_Victor_3.dat'
+Filename1 = '../StopwatchTimer/Measurements_' + name + '_1.dat' 
+Filename2 = '../StopwatchTimer/Measurements_' + name + '_2.dat' 
+Filename3 = '../StopwatchTimer/Measurements_' + name + '_3.dat' 
 
 # Here calls the function that makes the fit and compute de residuals, and stores it in a Python Library
 DATA1 = {}
@@ -38,15 +39,15 @@ DATA3['p0'], DATA3['p1'], DATA3['sigma_p0'], DATA3['sigma_p1'], DATA3['residuals
 # This is dummy step, because the same info could be extracted from the function above, but... whatever
 DATA1_read = read_data(Filename1)
 n1, t1 = DATA1_read['n'], DATA1_read['t_s']
-n1, t1 = n1[:15], t1[:15]
+#n1, t1 = n1[:15], t1[:15]
 
 DATA2_read = read_data(Filename2)
 n2, t2 = DATA2_read['n'], DATA2_read['t_s']
-n2, t2 = n2[:15], t2[:15]
+#n2, t2 = n2[:15], t2[:15]
 
 DATA3_read = read_data(Filename3)
 n3, t3 = DATA3_read['n'], DATA3_read['t_s']
-n3, t3 = n3[:15], t3[:15]
+#n3, t3 = n3[:15], t3[:15]
         
 # Use the fitted parameters to draw the fitted line usinf the function linear_fit in Functions_Assist.py
 n_fit_1 = np.linspace(0.9*n1.min(), 1.1*n1.max())
@@ -71,7 +72,7 @@ ax[0].errorbar(n2, t2, yerr=sig_t, color='k', fmt='o')
 ax[0].errorbar(n3, t3, yerr=sig_t, color='k', fmt='o')
 ax[0].set_xlabel('Timing measurement number')
 ax[0].set_ylabel('Time elapsed (s)')
-ax[0].set(xlim=(0, 16), ylim=(0, 55))
+ax[0].set(xlim=(0, 16), ylim=(1, 55))#, yscale='log')
 
 ax[0].plot(n_fit_1, t_fit_1, '-r')
 ax[0].plot(n_fit_2, t_fit_2, '-b')

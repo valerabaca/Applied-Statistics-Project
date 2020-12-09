@@ -55,9 +55,9 @@ def add_subplot_axes(ax,rect,axisbg='w'):
 def FitAndResiduals(filename):
     data_example = read_data(filename)
     n, t = data_example['n'], data_example['t_s']
-    if len(n) > 15:
-        n = n[:15]
-        t = t[:15]
+    #if len(n) > 15:
+    #    n = n[:15]
+    #    t = t[:15]
     
     # Perform the fit to a linear function
     chi2_object_lin = Chi2Regression(linear_fit, n, t)
@@ -86,13 +86,15 @@ def Fit2Gaussian(bin_centers, counts):
     sigma = minuit.values['sigma']
     return N, mu, sigma, s_counts
 
+def LowStatsSTD(values):
+    sigma = np.std(values)
+    s = sigma**2*len(values)/(len(values)-1)
+    s = np.sqrt(s)
+    return s
+
 def WeightedMean(values, errors):
-    if len(values) != len(errors):
-        return "Error"
-    else:
-        a = np.sum(values/errors**2)
-        b = np.sum(1.0/errors**2)
-        mu = a/b
-        sigma = np.sqrt(1.0/b)
+    weights = 1.0/errors**2
+    mu = np.average(values, weights=weights)
+    sigma = np.sqrt(1.0/np.sum(weights))
     return mu, sigma
 
