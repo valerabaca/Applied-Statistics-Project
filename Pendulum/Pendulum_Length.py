@@ -6,10 +6,12 @@ Created on Mon Dec  7 16:02:15 2020
 @author: vvalera
 """
 import numpy as np
-import matplotlib.pyplot as plt
+from iminuit import Minuit
+from scipy import stats
 import sys
 # External Functions import
-from Functions_Assist import WeightedMean, LowStatsSTD
+from Functions_Assist import constant, LowStatsSTD
+
 sys.path.append('../External_Functions')
 from ExternalFunctions import Chi2Regression
 
@@ -24,58 +26,41 @@ l_err = 0.05 # Error with the ruler 0.05 cm
 w_err = 0.05/10.0 # Error with the caliper 0.05 mm (converted to cm)
 h_err = 0.05/10.0 # Error with the caliper 0.05 mm (converted to cm)
 
-Filename1 = 'DataLength/Victor_Measurements.dat'
-Filename2 = 'DataLength/Sippo_Measurements.dat'
-Filename3 = 'DataLength/Peiyuan_Measurements.dat'
+hook = {'Victor': 1.140, 'Sippo': 1.160, 'Peiyuan': 1.165}
+weight = {'Victor': 3.460, 'Sippo': 3.450, 'Peiyuan': 3.445}
 
-DATA1, DATA2, DATA3 = {}, {}, {}
+Hook = np.array(list(hook.values()))
+Weight = np.array(list(weight.values()))
 
-DATA1['l1'], DATA1['l2'] = read_data(Filename1)[:,0], read_data(Filename1)[:,1]
-DATA2['l1'], DATA2['l2'] = read_data(Filename2)[:,0], read_data(Filename2)[:,1]
-DATA3['l1'], DATA3['l2'] = read_data(Filename3)[:,0], read_data(Filename3)[:,1]
+h_err = LowStatsSTD(Hook)
+w_err = LowStatsSTD(Weight)
 
-DATA1['l'] = np.mean(DATA1['l1']) + np.mean(DATA1['l2'])
-DATA1['l_err'] = np.sqrt(2)*l_err
+def FitConstant(values, errors):
+    Npoints = len(values)
+    x = np.arange(Npoints)
+    p_0 = np.mean(values)
+    chi2_object = Chi2Regression(constant, x, values, errors)
+    minuit_cte = Minuit(chi2_object, pedantic=False, p0 = p_0)
+    minuit_cte.migrad()
+    mean = minuit_cte.values['p0']
+    sigma = minuit_cte.errors['p0']
+    return mean, sigma
 
-DATA2['l'] = np.mean(DATA2['l1']) + np.mean(DATA2['l2'])
-DATA2['l_err'] = np.sqrt(2)*l_err
+def ComputeL(name):
+    Filename = 'DataLength/' + str(name) + '_Measurements.dat'
+    l1, l2 = read_data(Filename)[:,0], read_data(Filename)[:,1]
+    l1_err, l2_err = np.ones_like(l1)*LowStatsSTD(l1), np.ones_like(l2)*LowStatsSTD(l1)
+    L1, sigma_L1 = FitConstant(l1, l1_err)
+    L2, sigma_L2 = FitConstant(l2, l2_err)
+    
+    w = weight[name]
+    h = hook[name]    
+    
+    L = L1 + L2 + h + 0.5*w
+    
+    sigma2_L = sigma_L1**2 + sigma_L2**2 + h_err**2 + (0.5*w_err)**2
+    sigma_L = np.sqrt(sigma2_L)
+    
+    return L, sigma_L
 
-DATA3['l'] = np.mean(DATA3['l1']) + np.mean(DATA3['l2'])
-DATA3['l_err'] = np.sqrt(2)*l_err
 
-DATA1['h'], DATA1['h_err'] = 1.140, 0.005
-DATA2['h'], DATA2['h_err'] = 1.160, 0.005
-DATA3['h'], DATA3['h_err'] = 1.165, 0.005
-
-DATA1['w'], DATA1['w_err'] = 3.460, 0.005
-DATA2['w'], DATA2['w_err'] = 3.450, 0.005
-DATA3['w'], DATA3['w_err'] = 3.445, 0.005
-
-# L = L1 + L2 + hook[0] + w[0]/2
-
-l, sigma_l = WeightedMean(np.array([DATA1['l'], DATA2['l'], DATA3['l']]),
-                          np.array([DATA1['l_err'], DATA2['l_err'], DATA3['l_err']]))
-h, sigma_h = WeightedMean(np.array([DATA1['h'], DATA2['h'], DATA3['h']]),
-                          np.array([DATA1['h_err'], DATA2['h_err'], DATA3['h_err']]))
-w, sigma_w = WeightedMean(np.array([DATA1['w'], DATA2['w'], DATA3['w']]),
-                          np.array([DATA1['w_err'], DATA2['w_err'], DATA3['w_err']]))
-
-L = l + h + 0.5*w
-sigma_L = np.sqrt(sigma_l**2 + sigma_h**2 + (0.5*sigma_w)**2)
-
-t = np.array([2.761327857143244, 2.7591366917295193, 2.7684828571429394,
-              2.7660266253872243, 2.7625892481204497, 2.7612087719298453,
-              2.772606428571263, 2.778663333333263, 2.7570821078432926])
-t_err= np.array([0.059761432806335064, 0.038778331473693695, 0.036037498315646795,
-                 0.04543108453583409, 0.03877833763092251, 0.041885391948211156,
-                 0.059761429798607296, 0.041885390717901254, 0.04950737707058824])
-Period = WeightedMean(t, t_err)
-
-T = Period[0]
-sigma_T = Period[1]
-
-g = L*(2*np.pi/T)**2/100.0 # From cm to m
-
-sigma2_g = (2*np.pi/T)**4*sigma_L**2 + (2*L*(2*np.pi)**2/T**3)**2*sigma_T**2
-sigma_g = np.sqrt(sigma2_g)/100.0
-print(g, sigma_g)

@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from iminuit import Minuit
 import sys
+from scipy import stats
 
 # External Functions import
 sys.path.append('../../External_Functions/')
@@ -23,6 +24,10 @@ def read_data(filename):
 # Define linear function
 def linear_fit(x, p0, p1):
     return p0 + p1*x
+
+# Define a constant function
+def constant(x, p0):
+    return p0
 
 # Define a gaussian
 def gaussian(x, N, mu, sigma):
@@ -55,12 +60,11 @@ def add_subplot_axes(ax,rect,axisbg='w'):
 def FitAndResiduals(filename):
     data_example = read_data(filename)
     n, t = data_example['n'], data_example['t_s']
-    #if len(n) > 15:
-    #    n = n[:15]
-    #    t = t[:15]
     
     # Perform the fit to a linear function
-    chi2_object_lin = Chi2Regression(linear_fit, n, t)
+    sigma_t = 0.1
+    et = sigma_t*np.ones_like(t)
+    chi2_object_lin = Chi2Regression(linear_fit, n, t, et)
     minuit_lin = Minuit(chi2_object_lin, pedantic=False, p0=5.0, p1=3.0)
     minuit_lin.migrad()
     
@@ -70,11 +74,17 @@ def FitAndResiduals(filename):
     sigma_p0 = minuit_lin.errors['p0']
     sigma_p1 = minuit_lin.errors['p1']    
     
+    Nvar = 2
+    Npoints = len(t)
+    Ndof = Npoints - Nvar
+    Chi2 = minuit_lin.fval
+    Prob = stats.chi2.sf(Chi2, Ndof)
+    
     # Compute the residuals
     t_predict = linear_fit(n, *minuit_lin.args)
     residuals = t - t_predict    
     
-    return p0, p1, sigma_p0, sigma_p1, residuals
+    return p0, p1, sigma_p0, sigma_p1, residuals, Chi2, Prob
 
 def Fit2Gaussian(bin_centers, counts):
     s_counts = np.sqrt(counts)
@@ -98,3 +108,16 @@ def WeightedMean(values, errors):
     sigma = np.sqrt(1.0/np.sum(weights))
     return mu, sigma
 
+def Chi2Test(values, errors):
+    Npoints = len(values)
+    x = np.arange(Npoints)
+    p_0 = np.mean(values)
+    chi2_object = Chi2Regression(constant, x, values, errors)
+    minuit_cte = Minuit(chi2_object, pedantic=False, p0 = p_0)
+    minuit_cte.migrad()
+    Nvar = 1
+    Ndof = Npoints - Nvar
+    Chi2 = minuit_cte.fval
+    Prob = stats.chi2.sf(Chi2, Ndof)
+    return Chi2, Prob
+    

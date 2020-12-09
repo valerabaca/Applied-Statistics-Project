@@ -1,41 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec  7 11:46:51 2020
+Created on Wed Dec  9 19:25:47 2020
 
 @author: vvalera
 """
-# Standard Imports
-import numpy as np
-import matplotlib.pyplot as plt
-import sys
 
-# External Functions import - Troels Functions
-sys.path.append('../    External_Functions')
-from ExternalFunctions import nice_string_output, add_text_to_ax   # Useful functions to print fit results on figure
-
-# Local external function a.k.a my functions written in Functions_Assist.py (must be in the same folder or add to the sys.path as above)
-from Functions_Assist import read_data, linear_fit, add_subplot_axes, FitAndResiduals, Fit2Gaussian, gaussian
-
-names = ['Victor', 'Sippo', 'Peiyuan']
-name = names[2]
-
-# Getting the name of the data files
-Filename1 = '../StopwatchTimer/Measurements_' + name + '_1.dat' 
-Filename2 = '../StopwatchTimer/Measurements_' + name + '_2.dat' 
-Filename3 = '../StopwatchTimer/Measurements_' + name + '_3.dat' 
-
-# Here calls the function that makes the fit and compute de residuals, and stores it in a Python Library
-DATA1 = {}
-DATA1['p0'], DATA1['p1'], DATA1['sigma_p0'], DATA1['sigma_p1'], DATA1['residuals'] = FitAndResiduals(filename=Filename1)
-
-DATA2 = {}
-DATA2['p0'], DATA2['p1'], DATA2['sigma_p0'], DATA2['sigma_p1'], DATA2['residuals'] = FitAndResiduals(filename=Filename2)
-
-DATA3 = {}
-DATA3['p0'], DATA3['p1'], DATA3['sigma_p0'], DATA3['sigma_p1'], DATA3['residuals'] = FitAndResiduals(filename=Filename3)
-
-
+"""
 # This is dummy step, because the same info could be extracted from the function above, but... whatever
 DATA1_read = read_data(Filename1)
 n1, t1 = DATA1_read['n'], DATA1_read['t_s']
@@ -111,3 +82,4 @@ d = {r'$T_1$': [DATA1['p1'], DATA1['sigma_p1']],
      }
 text = nice_string_output(d, extra_spacing=2, decimals=3)
 add_text_to_ax(0.02, 0.97, text, ax[0], fontsize=15)
+"""
